@@ -100,7 +100,11 @@ run each of these in parallel.
 
 
 ### Storage size
-My main interest was what compression ratios each of the approaches could provide. 
+As discussed in the tools section, I am concentrating on lossless compression for this current study. In many
+cases, it may make sense to leverage lossy compression as the quality scores are fairly noisy and a number of
+studies show that it's possible to significantly bin quality scores without significantly impacting typical
+variant calling pipelines. However, to limit scope to the most uncontroversial mode of compression, for
+now I'll look at methods that preserve the full, original quality information.
 
 |   Sample   |  SRA  | FASTQ | FASTQ.gz |  uBAM | uCRAM | FaStore | Spring | Spring --no-ids | fqzcomp |
 | ---------- | ----- | ----- | -------- | ----- | ----- | ------- | ------ | --------------- | ------- |
