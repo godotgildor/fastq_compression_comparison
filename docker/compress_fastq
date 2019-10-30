@@ -24,9 +24,7 @@ def _parse_args():
     algorithm_group = ap.add_argument_group('Compression algorithm')
     compression_type_group = algorithm_group.add_mutually_exclusive_group(required=True)
     compression_type_group.add_argument('--ucram', help='Compress to an unmapped CRAM file', action='store_true')
-    compression_type_group.add_argument('--ucram-crumble', help='Compress to an unmapped CRAM file and compress quality scores using Crumble', action='store_true')
     compression_type_group.add_argument('--ubam', help='Compress to an unmapped BAM file', action='store_true')
-    compression_type_group.add_argument('--ubam-crumble', help='Compress to an unmapped BAM file and compress quality scores using Crumble', action='store_true')
     compression_type_group.add_argument('--mapped-cram', help='Compress to a mapped CRAM file. For this option, provide the mapped bam as input to the forward reads and provide the reference FASTA', action='store_true')
     compression_type_group.add_argument('--mapped-cram-crumble', help='Compress to a mapped CRAM file and compress quality scores using Crumble. For this option, provide the mapped bam as input to the forward reads and provide the reference FASTA', action='store_true')
     compression_type_group.add_argument('--fastore', help='Compress using the FaStore algorithm', action='store_true')
@@ -36,6 +34,7 @@ def _parse_args():
     misc_group = ap.add_argument_group('Misc arguments')
     misc_group.add_argument('--remove-ids', help='Remove the sample ids and replace to a unique identifier.', action='store_true')
     misc_group.add_argument('-o', '--output-prefix', help='(optional) The prefix to use for output. If not provided, we will use the prefix from the forward reads file', required=False)
+    misc_group.add_argument('-j', '--num-cores', help='(optional) The number of cores to use. Not all tools support this currently.', default=multiprocessing.cpu_count(), required=False)
 
     args = ap.parse_args()
 
@@ -71,7 +70,11 @@ def _get_fastq_to_sam_cmd(fwd_reads, sample_name, read_group, rev_reads=None):
     return cmd
 
 
-def convert_fastq_to_spring(fwd_reads, rev_reads=None, output_prefix=None, remove_ids=False):
+def convert_fastq_to_spring(fwd_reads, 
+                            rev_reads=None, 
+                            output_prefix=None, 
+                            remove_ids=False,
+                            num_threads=multiprocessing.cpu_count()):
     """Compress a pair of FASTQ files using Spring
 
     Args:
@@ -83,6 +86,7 @@ def convert_fastq_to_spring(fwd_reads, rev_reads=None, output_prefix=None, remov
         remove_ids (boolean): (optional) If set to true, Spring will remove
                               the sample ids (names will be lossy, but the
                               underlying data is preserved).
+        num_threads (int): (optional) Number of threads to use with Spring.
 
     Returns:
         A string giving the output filename.
@@ -96,7 +100,7 @@ def convert_fastq_to_spring(fwd_reads, rev_reads=None, output_prefix=None, remov
         'spring',
         '-c',
         '-o', output_filename,
-        '-t', str(multiprocessing.cpu_count())
+        '-t', str(num_threads)
     ]
     if fwd_reads.endswith('.gz'):
         cmd.append('-g')
@@ -115,7 +119,7 @@ def convert_fastq_to_ubam_or_ucram(fwd_reads,
                                    rev_reads=None,
                                    output_prefix=None,
                                    output_type='bam',
-                                   use_crumble=False):
+                                   num_threads=multiprocessing.cpu_count()):
     """Convert a pair of FASTQ files to unmapped BAM or CRAM file
 
     Args:
@@ -123,7 +127,7 @@ def convert_fastq_to_ubam_or_ucram(fwd_reads,
         rev_reads (string): (optional) The path to the reverse reads in FASTQ format.
         output_prefix (string): (optional) A prefix to use for the sample name and output file.
         output_type (string): (optional) Should we output as a bam (default) or cram?
-        use_curmble (boolean): (optional) If set to true, we will use Crumble to compress quality scores.
+        num_threads (int): (optional) Number of threads to use with samtools.
 
     Returns:
         A string giving the output filename.
@@ -142,39 +146,31 @@ def convert_fastq_to_ubam_or_ucram(fwd_reads,
 
     if output_type == 'bam':
         output_filename = f'{output_prefix}.bam'
-        if use_crumble:
-            cmd = [
-                'crumble', 
-                '-I', 'bam', 
-                '-O', 'bam,nthreads={}'.format(multiprocessing.cpu_count()),
-                '-', output_filename
-            ]
-        else:
-            cmd = ['samtools', 'view', '-b', '-o', output_filename]
+        cmd = [
+            'samtools', 'view', '-b',
+            '-@', str(num_threads),
+            '-o', output_filename
+        ]
     else:
         output_filename = f'{output_prefix}.cram'
-        if use_crumble:
-            cmd = [
-                'crumble',
-                '-I', 'bam',
-                '-O', 'cram,nthreads={}'.format(multiprocessing.cpu_count()),
-                '-', output_filename
-            ]
-        else:
-            cmd = ['samtools', 'view', '-C', '-o', output_filename]
+        cmd = [
+            'samtools', 'view', '-C',
+            '-@', str(num_threads),
+            '-o', output_filename]
 
     subprocess.check_call(cmd, stdin=fastq_to_sam_proc.stdout)
 
     return output_filename
 
 
-def convert_fastq_to_fastore(fwd_reads, rev_reads, output_prefix):
+def convert_fastq_to_fastore(fwd_reads, rev_reads, output_prefix, num_threads=multiprocessing.cpu_count()):
     """Compress a FASTQ file using fastore
 
     Args:
         fwd_reads (string): The path to the forward reads in FASTQ format.
         rev_reads (string): (optional) The path to the reverse reads in FASTQ format.
         output_prefix (string): (optional) A prefix to use for the sample name and output file.
+        num_threads (int): (optional) Number of threads to use with FaStore.
 
     Returns:
         A string giving the output filename.
@@ -186,7 +182,7 @@ def convert_fastq_to_fastore(fwd_reads, rev_reads, output_prefix):
     cmd = [
         'fastore_compress.sh', '--lossless',
         '--out', output_prefix,
-        '--threads', str(multiprocessing.cpu_count()),
+        '--threads', str(num_threads),
         '--in', fwd_reads
     ]
     if rev_reads is not None:
@@ -234,17 +230,7 @@ if __name__ == '__main__':
             rev_reads=args.rev_reads,
             output_prefix=args.output_prefix,
             output_type='cram',
-            use_crumble=False
-        )
-    elif args.ucram_crumble:
-        if args.remove_ids:
-            logging.warn('Removing ids not supported for ucram yet.')
-        convert_fastq_to_ubam_or_ucram(
-            fwd_reads=args.fwd_reads,
-            rev_reads=args.rev_reads,
-            output_prefix=args.output_prefix,
-            output_type='cram',
-            use_crumble=True
+            num_threads=args.num_threads
         )
     elif args.ubam:
         if args.remove_ids:
@@ -254,17 +240,7 @@ if __name__ == '__main__':
             rev_reads=args.rev_reads,
             output_prefix=args.output_prefix,
             output_type='bam',
-            use_crumble=False
-        )
-    elif args.ubam_crumble:
-        if args.remove_ids:
-            logging.warn('Removing ids not supported for ubam yet.')
-        convert_fastq_to_ubam_or_ucram(
-            fwd_reads=args.fwd_reads,
-            rev_reads=args.rev_reads,
-            output_prefix=args.output_prefix,
-            output_type='bam',
-            use_crumble=True
+            num_threads=args.num_threads
         )
     elif args.mapped_cram:
         logging.error('Support for mapped CRAM not available yet.')
@@ -278,14 +254,16 @@ if __name__ == '__main__':
         convert_fastq_to_fastore(
             fwd_reads=args.fwd_reads,
             rev_reads=args.rev_reads,
-            output_prefix=args.output_prefix
+            output_prefix=args.output_prefix,
+            num_threads=args.num_threads
         )
     elif args.spring:
         convert_fastq_to_spring(
             fwd_reads=args.fwd_reads,
             rev_reads=args.rev_reads,
             output_prefix=args.output_prefix,
-            remove_ids=args.remove_ids
+            remove_ids=args.remove_ids,
+            num_threads=args.num_threads
         )
     elif args.fqzcomp:
         if args.remove_ids:
