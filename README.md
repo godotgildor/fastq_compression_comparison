@@ -110,3 +110,21 @@ now I'll look at methods that preserve the full, original quality information.
 | ---------- | ----- | ----- | -------- | ----- | ----- | ------- | ------ | --------------- | ------- |
 | SRR2962693 |  7 GB | 40 GB |  10.3 GB | ----- | ----- | ------- | ------ | --------------- | ------- | 
 | SRR8861483 | ----- | ----- | -------- | ----- | ----- | ------- | ------ | --------------- | ------- |
+
+## Final caveats
+In the studies described above, I did not verify that the decompressed data matches the original data. A few
+tools mentioned there could be slight changes to white space or other small character changes that would impact
+md5 sums but should not impact the underlying information. In the future, it would be nice simply check that the
+nucleotides and quality scores are all as expected, but for now I'm assuming the tools are working as expected.
+
+In many pipelines, it may make sense to store the mapped data and throw away the original raw data. Assuming
+your mapped reads contain at least one full-length entry for every raw read, you should be able to 
+revert to unmapped FASTQ input without too much struggle and you having the mapped data would allow one to
+restart their pipeline at the variant calling stages rather than re-map the samples in any re-runs. In this case,
+a mapped CRAM, potentially with compressing quality scores using native CRAM quality score compression or 
+external tools like [Crumble]() probably makes the most sense.
+
+However, there are a number of cases where keeping the raw, unmapped data makes the most sense. For example,
+there are many analyses that may be performed that don't have a mapping stage. Also, some projects anticipate
+users leveraging multiple reference genomes in which case storing the data mapped to one specific reference
+might not make sense. For these projects, leveraging one of the tools above might be the most appropriate.
