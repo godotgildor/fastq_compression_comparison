@@ -65,6 +65,7 @@ As a first pass evaluation, I selected two NGS samples from the
 techniques.
 
 [**SRR2962693**](https://www.ncbi.nlm.nih.gov/sra/?term=SRR2962693): A human, whole exome sample from an Illumina HiSeq 2500 run. 
+
 [**SRR8861483**](https://www.ncbi.nlm.nih.gov/sra/?term=SRR8861483): A human, whole genome sample from an Illumina NovaSeq 6000 run.
 
 Starting with their NovaSeq instruments, Illumina began using a simplified quality binning approach, 
@@ -86,22 +87,22 @@ I assume using the max of the per-file time would be most pertinent here since i
 run each of these in parallel.
 
 #### Compression
-| Sample | gzip | uBAM | uCRAM | FaStore | Spring | Spring --no-ids | fqzcomp |
-| ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
-| SRR2962693 | 25.5m and 26m (51.5m total)| 
-| SRR8861483 | 
+|   Sample   |             gzip            |  uBAM | uCRAM | FaStore | Spring | Spring --no-ids | fqzcomp |
+| ---------- | --------------------------- | ----- | ----- | ------- | ------ | --------------- | ------- |
+| SRR2962693 | 25.5m and 26m (51.5m total) | ----- | ----- | ------- | ------ | --------------- | ------- |
+| SRR8861483 | ----------------------------| ----- | ----- | ------- | ------ | --------------- | ------- | 
 
 #### Decompression
-| Sample | gzip | uBAM | uCRAM | FaStore | Spring | Spring --no-ids | fqzcomp |
-| ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
-| SRR2962693 | 3.75m and 3.75mm (7.5m total)| 
-| SRR8861483 | 
+|   Sample   |               gzip            |  uBAM | uCRAM | FaStore | Spring | Spring --no-ids | fqzcomp |
+| ---------- | ----------------------------- | ----- | ----- | ------- | ------ | --------------- | ------- |
+| SRR2962693 | 3.75m and 3.75mm (7.5m total) | ----- | ----- | ------- | ------ | --------------- | ------- | 
+| SRR8861483 | ----------------------------- | ----- | ----- | ------- | ------ | --------------- | ------- |
 
 
 ### Storage size
 My main interest was what compression ratios each of the approaches could provide. 
 
-| Sample | SRA | FASTQ | FASTQ.gz | uBAM | uCRAM | FaStore | Spring | Spring --no-ids | fqzcomp |
-| ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
-| SRR2962693 | 7 GB | 40 GB | 10.3 GB | 
-| SRR8861483 | 
+|   Sample   |  SRA  | FASTQ | FASTQ.gz |  uBAM | uCRAM | FaStore | Spring | Spring --no-ids | fqzcomp |
+| ---------- | ----- | ----- | -------- | ----- | ----- | ------- | ------ | --------------- | ------- |
+| SRR2962693 |  7 GB | 40 GB |  10.3 GB | ----- | ----- | ------- | ------ | --------------- | ------- | 
+| SRR8861483 | ----- | ----- | -------- | ----- | ----- | ------- | ------ | --------------- | ------- |
