@@ -34,7 +34,7 @@ def _parse_args():
     misc_group = ap.add_argument_group('Misc arguments')
     misc_group.add_argument('--remove-ids', help='Remove the sample ids and replace to a unique identifier.', action='store_true')
     misc_group.add_argument('-o', '--output-prefix', help='(optional) The prefix to use for output. If not provided, we will use the prefix from the forward reads file', required=False)
-    misc_group.add_argument('-j', '--num-cores', help='(optional) The number of cores to use. Not all tools support this currently.', default=multiprocessing.cpu_count(), required=False)
+    misc_group.add_argument('-j', '--num-threads', help='(optional) The number of cores to use. Not all tools support this currently.', default=multiprocessing.cpu_count(), required=False)
 
     args = ap.parse_args()
 
