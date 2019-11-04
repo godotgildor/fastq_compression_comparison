@@ -120,7 +120,7 @@ requirements offered.
 
 #### Compression
 |   Sample   |             gzip            |             gzip -9         |  uBAM  | uCRAM  | FaStore | Spring | Spring --no-ids |   fqzcom  |
-| ---------- | --------------------------- | --------------------------- | ------ | -----  | ------- | ------ | --------------- |           |
+| ---------- | --------------------------- | --------------------------- | ------ | -----  | ------- | ------ | --------------- | --------- |
 | SRR2962693 |   26m and 26m (52m total)   |  1h 35m and 1h 39m (3h 14m) |   39m  |  35m   |   DNF   |   26m  |      26m        |    32m    |
 | SRR8861483 | 1h 36m and 1h 23m (2h 59m)  |   9h 35m + 12h = 21h 35m    | 2h 34m | 2h 35m |   DNF   |  3h 3m |     3h 2m       |  2h 15m   | 
 
@@ -156,6 +156,52 @@ now I'll look at methods that preserve the full, original quality information.
 | SRR2962693 WES | SRR8861483 WGS |
 | -------------- | -------------- |
 | ![WES Compressed file sizes](https://user-images.githubusercontent.com/3038393/68100909-94aa4800-fe7f-11e9-99cb-f2f6443dd191.png)| ![WGS Compressed file sizes](https://user-images.githubusercontent.com/3038393/68100964-f965a280-fe7f-11e9-8ca9-29496aaf843a.png) |
+
+## Discussion
+As is widely accepted, researchers at a minimum should gzip compress their raw FASTQ files. For the
+HiSeq data, this provided a close to 75% reduction in storage space compared to the raw FASTQ. Add in 
+the fact that gzipped files are cheap to decompress and the fact that most bioinformatics tools already
+accept gzipped FASTQ files as input, there are few reasons to keep raw FASTQ file around very long.
+
+For users who are interested in even greater storage savings though, Spring appears to be a compelling
+option. I saw file sizes that saved an additional 55% - 66% storage space compared to gzipped FASTQ files.
+While the decompression time was significantly longer than a simple gzip file, it still seemed reasonable
+at roughly an hour for decompressing a WGS sample on a 16 core node (where only 8 cores were used). 
+It was also nice that the original read ordering is completely preserved (unlike unmapped BAM and CRAM files
+where the reads are sorted by read name) and that the raw base pairs and quality scores matched the 
+initial data exactly, unlike fqzcomp which has the occasional quality score change. (Again, according
+to the fqzcomp authors some changes may be expected as fqzcomp will set the quality score to 0 for an base
+pair called as an N. These changes seem eminently reasonable, but it's nice to not have to worry about 
+the changes and wonder if maybe at least some subset of changes was due to some other issue).
+
+At a compression time of about 3 hours and a decompression time of about an hour for a WGS on an
+r5.4xlarge, we can calculate the break-even time for storing the Spring compressed file vs.
+the gzipped file as follows:
+
+**Hot storage**
+```
+4 hours of r5d.4xlarge * $1.152/hour + 15 GB * $0.026 /GB/month * storage_duration = 33 GB * $0.026 /GB/month * storage_duration
+
+ ($0.858 - $0.39) * storage_duration = $4.608
+
+ storage_duration = 9.9 months
+```
+I believe we should be able to leverage the smaller r5d.2xlarge and see similar run times for compression and
+decompression since we are only using 8 cores. If this is true, our break even time would occur in roughly half
+the time, or after about 5 months.
+
+For cold storage (i.e. Glacier) the break-even would be pushed out a bit.
+```
+4 hours of r5d.4xlarge * $1.152/hour + 15 GB * $0.005 /GB/month * storage_duration = 33 GB * $0.005 /GB/month * storage_duration
+
+ ($0.165 - $0.075) * storage_duration = $4.608
+
+ storage_duration = 51 months
+```
+Or roughly 26 months if we are able to use an r5d.2xlage.
+
+Leveraging the spot market would bring in our break-even dates further as would the ability
+to leverage underutilized compute cycles within our processing pipelines to perform the compression.
 
 ## Final caveats
 I did not exhaustively verify that the data compression was lossless under all methods. At a minimum, 
