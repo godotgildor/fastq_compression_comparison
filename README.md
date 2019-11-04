@@ -161,7 +161,7 @@ now I'll look at methods that preserve the full, original quality information.
 As is widely accepted, researchers at a minimum should gzip compress their raw FASTQ files. For the
 HiSeq data, this provided a close to 75% reduction in storage space compared to the raw FASTQ. Add in 
 the fact that gzipped files are cheap to decompress and the fact that most bioinformatics tools already
-accept gzipped FASTQ files as input, there are few reasons to keep raw FASTQ file around very long.
+accept gzipped FASTQ files as input, and I think you'll find there are few reasons to keep raw FASTQ file around very long.
 
 For users who are interested in even greater storage savings though, Spring appears to be a compelling
 option. I saw file sizes that saved an additional 55% - 66% storage space compared to gzipped FASTQ files.
