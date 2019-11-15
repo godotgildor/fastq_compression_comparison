@@ -3,7 +3,7 @@ ENV SAMTOOLS_VERSION 1.9
 ENV PICARD_VERSION 2.21.1
 ENV CRUMBLE_VERSION 0.8.3
 
-RUN apt-get update && apt-get install -y gcc g++ wget ncurses-dev zlib1g-dev libbz2-dev liblzma-dev build-essential git cmake
+RUN apt-get update && apt-get install -y gcc g++ wget ncurses-dev zlib1g-dev libbz2-dev liblzma-dev build-essential git cmake openmpi-bin libopenmpi-dev
 RUN wget https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VERSION}/samtools-${SAMTOOLS_VERSION}.tar.bz2 && \
     tar jxvf samtools-${SAMTOOLS_VERSION}.tar.bz2 && \
     cd samtools-${SAMTOOLS_VERSION} && ./configure --prefix=/samtools && make -j `nproc` && make install
@@ -19,6 +19,10 @@ RUN wget https://github.com/jkbonfield/crumble/releases/download/v0.8.3/crumble-
     cd /samtools-${SAMTOOLS_VERSION}/htslib-${SAMTOOLS_VERSION} && ./configure && make -j `nproc` && make install && \
     cd / && tar zxvf crumble-${CRUMBLE_VERSION}.tar.gz && mv crumble-${CRUMBLE_VERSION} /crumble && cd /crumble && \
     ./configure --with-htslib=/samtools-${SAMTOOLS_VERSION}/htslib-${SAMTOOLS_VERSION} && make -j `nproc`
+RUN git clone https://github.com/mitogen/genie.git && \
+    cd genie && mkdir build && cd build && \
+    cmake -DGENIE_USE_OPENMP=1 ../ && \
+    make -j `nproc`
 
 #########################################################################################################
 # Final image
@@ -31,6 +35,7 @@ COPY --from=build /picard/ /picard/
 COPY --from=build /fqzcomp/fqzcomp /usr/local/bin/fqzcomp
 COPY --from=build /FaStore/bin /FaStore/scripts
 COPY --from=build /FaStore/scripts /FaStore/scripts
+COPY --from=build /genie/build/bin/* /usr/local/bin/
 RUN sed -i 's/FASTORE_BIN=.\//FASTORE_BIN=\/FaStore\/scripts\//g' /FaStore/scripts/*.sh
 RUN sed -i 's/FASTORE_REBIN=.\//FASTORE_REBIN=\/FaStore\/scripts\//g' /FaStore/scripts/*.sh
 RUN sed -i 's/FASTORE_PACK=.\//FASTORE_PACK=\/FaStore\/scripts\//g' /FaStore/scripts/*.sh
