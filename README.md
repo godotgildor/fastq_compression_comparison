@@ -125,7 +125,7 @@ requirements offered.
 #### Compression
 |   Sample   |             gzip            |             gzip -9         |  uBAM  | uCRAM  | FaStore | Spring | Spring --no-ids |   fqzcom  |  repaq |  repaq-xz |
 | ---------- | --------------------------- | --------------------------- | ------ | -----  | ------- | ------ | --------------- | --------- | ------ | --------- |
-| SRR2962693 |   26m and 26m (52m total)   |  1h 35m and 1h 39m (3h 14m) |   39m  |  35m   |   DNF   |   26m  |      26m        |    32m    |        |           |
+| SRR2962693 |   26m and 26m (52m total)   |  1h 35m and 1h 39m (3h 14m) |   39m  |  35m   |   DNF   |   26m  |      26m        |    32m    |  10m   |    52m    |
 | SRR8861483 | 1h 36m and 1h 23m (2h 59m)  |   9h 35m + 12h = 21h 35m    | 2h 34m | 2h 35m |   DNF   |  3h 3m |     3h 2m       |  2h 15m   |  47m   |    147m   |
 
 | SRR2962693 WES | SRR8861483 WGS |
@@ -135,7 +135,7 @@ requirements offered.
 #### Decompression
 |   Sample   |               gzip            |             gzip -9           |  uBAM | uCRAM  | FaStore | Spring | Spring --no-ids |          fqzcomp            |  repaq |  repaq-xz |
 | ---------- | ----------------------------- | ----------------------------- | ----- | -----  | ------- | ------ | --------------- | --------------------------- | ------ | --------- |
-| SRR2962693 |      2m and 2m (4m total)     |    2m and 2m (4m total)       | 10m   |  10m   |   DNF   |  16m   |      16m        | 14m and 14m (28m total)     |        |           |
+| SRR2962693 |      2m and 2m (4m total)     |    2m and 2m (4m total)       | 10m   |  10m   |   DNF   |  16m   |      16m        | 14m and 14m (28m total)     |  18m   |     25m   |
 | SRR8861483 | 11m and 11m (22m total)       |      11m and 11m (22m total)  | 58m   | 1h 25m |   DNF   |  53m   |      51m        | 1h 5m and ??? (2h 10m)      |   92m  |    122m   |
 
 (Note: I forgot to record the time for decompressing the reverse reads for fqzcomp. My assumption is 
@@ -154,7 +154,7 @@ now I'll look at methods that preserve the full, original quality information.
 
 |   Sample   |  SRA  |   FASTQ    | FASTQ.gz | FASTQ.gz -9 |  uBAM  | uCRAM  | FaStore | Spring | Spring --no-ids | fqzcomp |  repaq |  repaq-xz |
 | ---------- | ----- | ---------- | -------- | ----------- | ------ | ------ | ------- | ------ | --------------- | ------- | ------ | --------- |
-| SRR2962693 |  7 GB |   40 GB    |  10.3 GB |   9.4 GB    | 9.3 GB | 6.6 GB |   DNF   | 3.5 GB |      3.5 GB     |  4.7 GB |        |           |
+| SRR2962693 |  7 GB |   40 GB    |  10.3 GB |   9.4 GB    | 9.3 GB | 6.6 GB |   DNF   | 3.5 GB |      3.5 GB     |  4.7 GB | 12 GB  |    5.4 GB |
 | SRR8861483 | 23 GB |   284 GB   |  33 GB   |  32 GB      | 33 GB  | 22 GB  |   DNF   | 15 GB  |      15 GB      |  37 GB  | 77 GB  |    21 GB  |
 
 | SRR2962693 WES | SRR8861483 WGS |
