@@ -220,6 +220,9 @@ verify that all quality changes could be explained by this behavior.
 For **Spring**, I verified that the nucleotide information and the quality information from the uncompressed 
 data exactly matched the input data.
 
+For **repaq**, I verified that the nucleotide information and the quality information from the ucompressed
+data exactly matched the input data.
+
 During **uBAM** and **uCRAM** creation, the input reads are sorted by read name, making comparison of 
 the uncompressed and initial data more challenging. For now, I did verify that for at least one read
 the nucleotides and quality scores match exactly. Although a more thorough validation is possible, I feel
