@@ -7,34 +7,95 @@ import sys
 import logging
 import multiprocessing
 
-FASTQ_PATTERN = '(.fq|.fastq)(.gz)?$'
+FASTQ_PATTERN = "(.fq|.fastq)(.gz)?$"
 
 
 def _parse_args():
-    ap = argparse.ArgumentParser(description='Compress a pair of FASTQ files.')
+    ap = argparse.ArgumentParser(description="Compress a pair of FASTQ files.")
 
-    input_file_group = ap.add_argument_group('Input files')
-    input_file_group.add_argument('-1', '--fwd-reads', help='The forward reads in FASTQ or FASTQ.GZ format', required=True)
-    input_file_group.add_argument('-2', '--rev-reads', help='(optional) The reverse reads in FASTQ or FASTQ.GZ format', required=False)
-    input_file_group.add_argument('-r', '--ref-fasta', help='(optional) The reference FASTA - only needed if a mapped BAM file is provided as input', required=False)
+    input_file_group = ap.add_argument_group("Input files")
+    input_file_group.add_argument(
+        "-1",
+        "--fwd-reads",
+        help="The forward reads in FASTQ or FASTQ.GZ format",
+        required=True,
+    )
+    input_file_group.add_argument(
+        "-2",
+        "--rev-reads",
+        help="(optional) The reverse reads in FASTQ or FASTQ.GZ format",
+        required=False,
+    )
+    input_file_group.add_argument(
+        "-r",
+        "--ref-fasta",
+        help="(optional) The reference FASTA - only needed if a mapped BAM file is "
+        "provided as input",
+        required=False,
+    )
 
-    # For whatever reason, mutually_exclusive_group does not permit the addition of a title.
-    # So to actually group these together on the help line, it is useful to first create
-    # a group, which has a title, and then add a mutually_exclusive_group to that group.
-    algorithm_group = ap.add_argument_group('Compression algorithm')
+    # For whatever reason, mutually_exclusive_group does not permit the addition of a
+    # title. So to actually group these together on the help line, it is useful to
+    # first create a group, which has a title, and then add a mutually_exclusive_group
+    # to that group.
+    algorithm_group = ap.add_argument_group("Compression algorithm")
     compression_type_group = algorithm_group.add_mutually_exclusive_group(required=True)
-    compression_type_group.add_argument('--ucram', help='Compress to an unmapped CRAM file', action='store_true')
-    compression_type_group.add_argument('--ubam', help='Compress to an unmapped BAM file', action='store_true')
-    compression_type_group.add_argument('--mapped-cram', help='Compress to a mapped CRAM file. For this option, provide the mapped bam as input to the forward reads and provide the reference FASTA', action='store_true')
-    compression_type_group.add_argument('--mapped-cram-crumble', help='Compress to a mapped CRAM file and compress quality scores using Crumble. For this option, provide the mapped bam as input to the forward reads and provide the reference FASTA', action='store_true')
-    compression_type_group.add_argument('--fastore', help='Compress using the FaStore algorithm', action='store_true')
-    compression_type_group.add_argument('--spring', help='Compress using the Spring algorithm', action='store_true')
-    compression_type_group.add_argument('--fqzcomp', help='Compress using the fqzcomp algorithm', action='store_true')
+    compression_type_group.add_argument(
+        "--ucram", help="Compress to an unmapped CRAM file", action="store_true"
+    )
+    compression_type_group.add_argument(
+        "--repaq", help="Compress using the Repaq algorithm", action="store_true"
+    )
+    compression_type_group.add_argument(
+        "--repaq-xz", help="Compress using the Repaq algorithm", action="store_true"
+    )
+    compression_type_group.add_argument(
+        "--ubam", help="Compress to an unmapped BAM file", action="store_true"
+    )
+    compression_type_group.add_argument(
+        "--mapped-cram",
+        help="Compress to a mapped CRAM file. For this option, provide the mapped bam "
+        "as input to the forward reads and provide the reference FASTA",
+        action="store_true",
+    )
+    compression_type_group.add_argument(
+        "--mapped-cram-crumble",
+        help="Compress to a mapped CRAM file and compress quality scores using Crumble."
+        " For this option, provide the mapped bam as input to the forward reads "
+        "and provide the reference FASTA",
+        action="store_true",
+    )
+    compression_type_group.add_argument(
+        "--fastore", help="Compress using the FaStore algorithm", action="store_true"
+    )
+    compression_type_group.add_argument(
+        "--spring", help="Compress using the Spring algorithm", action="store_true"
+    )
+    compression_type_group.add_argument(
+        "--fqzcomp", help="Compress using the fqzcomp algorithm", action="store_true"
+    )
 
-    misc_group = ap.add_argument_group('Misc arguments')
-    misc_group.add_argument('--remove-ids', help='Remove the sample ids and replace to a unique identifier.', action='store_true')
-    misc_group.add_argument('-o', '--output-prefix', help='(optional) The prefix to use for output. If not provided, we will use the prefix from the forward reads file', required=False)
-    misc_group.add_argument('-j', '--num-threads', help='(optional) The number of cores to use. Not all tools support this currently.', default=multiprocessing.cpu_count(), required=False)
+    misc_group = ap.add_argument_group("Misc arguments")
+    misc_group.add_argument(
+        "--remove-ids",
+        help="Remove the sample ids and replace to a unique identifier.",
+        action="store_true",
+    )
+    misc_group.add_argument(
+        "-o",
+        "--output-prefix",
+        help="(optional) The prefix to use for output. If not provided, we will use the"
+        " prefix from the forward reads file",
+        required=False,
+    )
+    misc_group.add_argument(
+        "-j",
+        "--num-threads",
+        help="(optional) The number of cores to use. Not all tools support this "
+        "currently.",
+        default=multiprocessing.cpu_count(),
+        required=False,
+    )
 
     args = ap.parse_args()
 
@@ -45,68 +106,80 @@ def _get_fastq_to_sam_cmd(fwd_reads, sample_name, read_group, rev_reads=None):
     """Get a command list suitable to provide as input to subprocess for
     converting a set of FASTQ files to a SAM file
 
-    Args:
-        fwd_reads (string): The path to the forward reads in FASTQ format.
-        rev_reads (string): (optional) The path to the reverse reads in FASTQ format.
-        sample_name (string): The name to use for the sample name.
-        read_group (string): The read group to use for this sample.
+    Parameters
+    ----------
+    fwd_reads : str
+        The path to the forward reads in FASTQ format
+    sample_name : str
+        The name to use for the sample name
+    read_group : str
+        The read group to use for this sample
+    rev_reads : str, optional
+        The path to the reverse reads in FASTQ format, by default None
 
-    Returns:
+    Returns
+    -------
+    list[str]
         A list of strings that can be passed to a subprocess function for
-        execution.
+        execution
     """
 
     cmd = [
-        'java', '-jar', '/picard/picard.jar', 'FastqToSam',
-        f'F1={fwd_reads}',
-        f'O=/dev/stdout',
-        'QUIET=true',
-        f'SM={sample_name}',
-        f'RG={read_group}'
+        "java",
+        "-jar",
+        "/picard/picard.jar",
+        "FastqToSam",
+        f"F1={fwd_reads}",
+        f"O=/dev/stdout",
+        "QUIET=true",
+        f"SM={sample_name}",
+        f"RG={read_group}",
     ]
     if rev_reads is not None:
-        cmd.append(f'F2={rev_reads}')
+        cmd.append(f"F2={rev_reads}")
 
     return cmd
 
 
-def convert_fastq_to_spring(fwd_reads, 
-                            rev_reads=None, 
-                            output_prefix=None, 
-                            remove_ids=False,
-                            num_threads=multiprocessing.cpu_count()):
+def convert_fastq_to_spring(
+    fwd_reads,
+    rev_reads=None,
+    output_prefix=None,
+    remove_ids=False,
+    num_threads=multiprocessing.cpu_count(),
+):
     """Compress a pair of FASTQ files using Spring
 
-    Args:
-        fwd_reads (string): The path to the forward reads in FASTQ format.
-        rev_reads (string): (optional) The path to the reverse reads in FASTQ
-                            format.
-        output_prefix (string): (optional) A prefix to use for the sample name
-                                and output file.
-        remove_ids (boolean): (optional) If set to true, Spring will remove
-                              the sample ids (names will be lossy, but the
-                              underlying data is preserved).
-        num_threads (int): (optional) Number of threads to use with Spring.
+    Parameters
+    ----------
+    fwd_reads : str
+        The path to the forward reads in FASTQ format
+    rev_reads : str, optional
+        The path to the reverse reads in FASTQ format, by default None
+    output_prefix : str, optional
+        A prefix to use for the sample name and output file, by default None
+    remove_ids : bool, optional
+        If set to true, Spring will remove the sample ids (names will be lossy, but the
+        underlying data is preserved), by default False
+    num_threads : int, optional
+        Number of threads to use with Spring, by default multiprocessing.cpu_count()
 
-    Returns:
-        A string giving the output filename.
+    Returns
+    -------
+    str
+        The output filename
     """
     if output_prefix is None:
         output_prefix = os.path.basename(fwd_reads)
-        output_prefix = re.sub(FASTQ_PATTERN, '', output_prefix)
+        output_prefix = re.sub(FASTQ_PATTERN, "", output_prefix)
 
-    output_filename = f'{output_prefix}.spring'
-    cmd = [
-        'spring',
-        '-c',
-        '-o', output_filename,
-        '-t', str(num_threads)
-    ]
-    if fwd_reads.endswith('.gz'):
-        cmd.append('-g')
+    output_filename = f"{output_prefix}.spring"
+    cmd = ["spring", "-c", "-o", output_filename, "-t", str(num_threads)]
+    if fwd_reads.endswith(".gz"):
+        cmd.append("-g")
     if remove_ids:
-        cmd.append('--no-ids')
-    cmd.extend(['-i', fwd_reads])
+        cmd.append("--no-ids")
+    cmd.extend(["-i", fwd_reads])
     if rev_reads is not None:
         cmd.append(rev_reads)
 
@@ -115,147 +188,222 @@ def convert_fastq_to_spring(fwd_reads,
     return output_filename
 
 
-def convert_fastq_to_ubam_or_ucram(fwd_reads,
-                                   rev_reads=None,
-                                   output_prefix=None,
-                                   output_type='bam',
-                                   num_threads=multiprocessing.cpu_count()):
+def convert_fastq_to_ubam_or_ucram(
+    fwd_reads,
+    rev_reads=None,
+    output_prefix=None,
+    output_type="bam",
+    num_threads=multiprocessing.cpu_count(),
+):
     """Convert a pair of FASTQ files to unmapped BAM or CRAM file
 
-    Args:
-        fwd_reads (string): The path to the forward reads in FASTQ format.
-        rev_reads (string): (optional) The path to the reverse reads in FASTQ format.
-        output_prefix (string): (optional) A prefix to use for the sample name and output file.
-        output_type (string): (optional) Should we output as a bam (default) or cram?
-        num_threads (int): (optional) Number of threads to use with samtools.
+    Parameters
+    ----------
+    fwd_reads : stt
+        The path to the forward reads in FASTQ format
+    rev_reads : str, optional
+        The path to the reverse reads in FASTQ format, by default None
+    output_prefix : str, optional
+        A prefix to use for the sample name and output file, by default None
+    output_type : str, optional
+        Should we output as a bam (default) or cram?, by default 'bam'
+    num_threads : int, optional
+        Number of threads to use with samtools, by default multiprocessing.cpu_count()
 
-    Returns:
-        A string giving the output filename.
+    Returns
+    -------
+    str
+        The output filename
     """
     if output_prefix is None:
         output_prefix = os.path.basename(fwd_reads)
-        output_prefix = re.sub(FASTQ_PATTERN, '', output_prefix)
+        output_prefix = re.sub(FASTQ_PATTERN, "", output_prefix)
 
     cmd = _get_fastq_to_sam_cmd(
         fwd_reads=fwd_reads,
         rev_reads=rev_reads,
         sample_name=output_prefix,
-        read_group=f'{output_prefix}_1'
+        read_group=f"{output_prefix}_1",
     )
     fastq_to_sam_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 
-    if output_type == 'bam':
-        output_filename = f'{output_prefix}.bam'
-        cmd = [
-            'samtools', 'view', '-b',
-            '-@', str(num_threads),
-            '-o', output_filename
-        ]
+    if output_type == "bam":
+        output_filename = f"{output_prefix}.bam"
+        cmd = ["samtools", "view", "-b", "-@", str(num_threads), "-o", output_filename]
     else:
-        output_filename = f'{output_prefix}.cram'
-        cmd = [
-            'samtools', 'view', '-C',
-            '-@', str(num_threads),
-            '-o', output_filename]
+        output_filename = f"{output_prefix}.cram"
+        cmd = ["samtools", "view", "-C", "-@", str(num_threads), "-o", output_filename]
 
     subprocess.check_call(cmd, stdin=fastq_to_sam_proc.stdout)
 
     return output_filename
 
 
-def convert_fastq_to_fastore(fwd_reads, rev_reads, output_prefix, num_threads=multiprocessing.cpu_count()):
+def convert_fastq_to_fastore(
+    fwd_reads, rev_reads, output_prefix, num_threads=multiprocessing.cpu_count()
+):
     """Compress a FASTQ file using fastore
 
-    Args:
-        fwd_reads (string): The path to the forward reads in FASTQ format.
-        rev_reads (string): (optional) The path to the reverse reads in FASTQ format.
-        output_prefix (string): (optional) A prefix to use for the sample name and output file.
-        num_threads (int): (optional) Number of threads to use with FaStore.
+    Parameters
+    ----------
+    fwd_reads : str
+        The path to the forward reads in FASTQ format
+    rev_reads : str
+        The path to the reverse reads in FASTQ format
+    output_prefix : str
+        A prefix to use for the sample name and output file
+    num_threads : int, optional
+        Number of threads to use with FaStore, by default multiprocessing.cpu_count()
 
-    Returns:
-        A string giving the output filename.
+    Returns
+    -------
+    str
+        The output filename
     """
     if output_prefix is None:
         output_prefix = os.path.basename(fwd_reads)
-        output_prefix = re.sub(FASTQ_PATTERN, '', output_prefix)
+        output_prefix = re.sub(FASTQ_PATTERN, "", output_prefix)
 
     cmd = [
-        'fastore_compress.sh', '--lossless',
-        '--out', output_prefix,
-        '--threads', str(num_threads),
-        '--in', fwd_reads
+        "fastore_compress.sh",
+        "--lossless",
+        "--out",
+        output_prefix,
+        "--threads",
+        str(num_threads),
+        "--in",
+        fwd_reads,
     ]
     if rev_reads is not None:
-        cmd.extend(['--pair', rev_reads])
+        cmd.extend(["--pair", rev_reads])
 
     subprocess.check_call(cmd)
 
-    return (f'{output_prefix}.cmeta', f'{output_prefix}.cdata')
+    return (f"{output_prefix}.cmeta", f"{output_prefix}.cdata")
 
 
 def convert_fastq_to_fqzcomp(reads, output_prefix):
     """Compress a FASTQ file using fqzcomp
 
-    Args:
-        reads (string): The path to the FASTQ file to be compressed.
-        output_prefix (string): (optional) A prefix to use for the sample name and output file.
+    Parameters
+    ----------
+    reads : str
+        The path to the FASTQ file to be compressed
+    output_prefix : str
+        A prefix to use for the sample name and output file
 
-    Returns:
-        A string giving the output filename.
+    Returns
+    -------
+    str
+        The output filename
     """
     if output_prefix is None:
         output_prefix = os.path.basename(reads)
-        output_prefix = re.sub(FASTQ_PATTERN, '', output_prefix)
+        output_prefix = re.sub(FASTQ_PATTERN, "", output_prefix)
     # Recommended parameters for Illumina data as provided by:
     # https://github.com/jkbonfield/fqzcomp
-    output_filename = f'{output_prefix}.fqz'
+    output_filename = f"{output_prefix}.fqz"
 
-    if reads.endswith('.gz'):
-        input_proc = subprocess.Popen(['zcat', reads], stdout=subprocess.PIPE)
+    if reads.endswith(".gz"):
+        input_proc = subprocess.Popen(["zcat", reads], stdout=subprocess.PIPE)
     else:
-        input_proc = subprocess.Popen(['cat', reads], stdout=subprocess.PIPE)
-    cmd = ['fqzcomp', '-n2', '-s7+', '-b', '-q3', '/dev/stdin', output_filename]
+        input_proc = subprocess.Popen(["cat", reads], stdout=subprocess.PIPE)
+    cmd = ["fqzcomp", "-n2", "-s7+", "-b", "-q3", "/dev/stdin", output_filename]
     subprocess.check_call(cmd, stdin=input_proc.stdout)
 
     return output_filename
 
 
-if __name__ == '__main__':
+def convert_fastq_to_repaq(
+    fwd_reads,
+    rev_reads=None,
+    output_prefix=None,
+    xz_compress=False,
+    num_threads=multiprocessing.cpu_count(),
+):
+    """Compress a pair of FASTQ files using Repaq
+
+    Parameters
+    ----------
+    fwd_reads : str
+        The path to the forward reads in FASTQ format
+    rev_reads : str, optional
+        The path to the reverse reads in FASTQ format, by default None
+    output_prefix : str, optional
+        A prefix to use for the sample name and output file, by default None
+    xz_compress : bool, optional
+        Should we use xz to further compress the output?
+    num_threads : int, optional
+        Number of threads to use with Spring, by default multiprocessing.cpu_count()
+
+    Returns
+    -------
+    str
+        The output filename
+    """
+    if output_prefix is None:
+        output_prefix = os.path.basename(fwd_reads)
+        output_prefix = re.sub(FASTQ_PATTERN, "", output_prefix)
+
+    # Create the output filename
+    output_filename = f"{output_prefix}.rfq"
+    if xz_compress:
+        output_filename += ".xz"
+
+    # Generate the repaq command
+    cmd = ["repaq", "-c", "--stdout", "-i", fwd_reads]
+    if rev_reads is not None:
+        cmd.extend(["-I", rev_reads])
+
+    # Now run repaq and optionally run xz to further compress
+    with open(output_filename, "w") as output_fh:
+        if xz_compress:
+            repaq_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            # cmd = ["pxz", "-T", str(num_threads), '--lzma=dict=1000000000', "-z", "-c"]
+            cmd = ["xz", "-T", str(num_threads), "--lzma2=dict=1000000000", "-z", "-c"]
+            subprocess.check_call(cmd, stdin=repaq_proc.stdout, stdout=output_fh)
+        else:
+            repaq_proc = subprocess.check_call(cmd, stdout=output_fh)
+
+    return output_filename
+
+
+if __name__ == "__main__":
     args = _parse_args()
     if args.ucram:
         if args.remove_ids:
-            logging.warn('Removing ids not supported for ucram yet.')
+            logging.warn("Removing ids not supported for ucram yet.")
         convert_fastq_to_ubam_or_ucram(
             fwd_reads=args.fwd_reads,
             rev_reads=args.rev_reads,
             output_prefix=args.output_prefix,
-            output_type='cram',
-            num_threads=args.num_threads
+            output_type="cram",
+            num_threads=args.num_threads,
         )
     elif args.ubam:
         if args.remove_ids:
-            logging.warn('Removing ids not supported for ubam yet.')
+            logging.warn("Removing ids not supported for ubam yet.")
         convert_fastq_to_ubam_or_ucram(
             fwd_reads=args.fwd_reads,
             rev_reads=args.rev_reads,
             output_prefix=args.output_prefix,
-            output_type='bam',
-            num_threads=args.num_threads
+            output_type="bam",
+            num_threads=args.num_threads,
         )
     elif args.mapped_cram:
-        logging.error('Support for mapped CRAM not available yet.')
+        logging.error("Support for mapped CRAM not available yet.")
         sys.exit(1)
     elif args.mapped_cram_crumble:
-        logging.error('Support for mapped CRAM not available yet.')
+        logging.error("Support for mapped CRAM not available yet.")
         sys.exit(1)
     elif args.fastore:
         if args.remove_ids:
-            logging.warn('Removing ids not supported for fastore yet.')
+            logging.warn("Removing ids not supported for fastore yet.")
         convert_fastq_to_fastore(
             fwd_reads=args.fwd_reads,
             rev_reads=args.rev_reads,
             output_prefix=args.output_prefix,
-            num_threads=args.num_threads
+            num_threads=args.num_threads,
         )
     elif args.spring:
         convert_fastq_to_spring(
@@ -263,16 +411,29 @@ if __name__ == '__main__':
             rev_reads=args.rev_reads,
             output_prefix=args.output_prefix,
             remove_ids=args.remove_ids,
-            num_threads=args.num_threads
+            num_threads=args.num_threads,
         )
     elif args.fqzcomp:
         if args.remove_ids:
-            logging.warn('Removing ids not supported for fqzcomp yet.')
-        convert_fastq_to_fqzcomp(
-            reads=args.fwd_reads,
-            output_prefix=args.output_prefix
+            logging.warn("Removing ids not supported for fqzcomp yet.")
+        convert_fastq_to_fqzcomp(reads=args.fwd_reads, output_prefix=args.output_prefix)
+        convert_fastq_to_fqzcomp(reads=args.rev_reads, output_prefix=args.output_prefix)
+    elif args.repaq:
+        if args.remove_ids:
+            logging.warn("Removing ids not supported for fqzcomp yet.")
+        convert_fastq_to_repaq(
+            fwd_reads=args.fwd_reads,
+            rev_reads=args.rev_reads,
+            output_prefix=args.output_prefix,
+            num_threads=args.num_threads,
         )
-        convert_fastq_to_fqzcomp(
-            reads=args.rev_reads,
-            output_prefix=args.output_prefix
+    elif args.repaq_xz:
+        if args.remove_ids:
+            logging.warn("Removing ids not supported for fqzcomp yet.")
+        convert_fastq_to_repaq(
+            fwd_reads=args.fwd_reads,
+            rev_reads=args.rev_reads,
+            output_prefix=args.output_prefix,
+            xz_compress=True,
+            num_threads=args.num_threads,
         )
