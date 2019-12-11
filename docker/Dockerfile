@@ -3,27 +3,37 @@ ENV SAMTOOLS_VERSION 1.9
 ENV PICARD_VERSION 2.21.1
 ENV CRUMBLE_VERSION 0.8.3
 
-RUN apt-get update && apt-get install -y gcc g++ wget ncurses-dev zlib1g-dev libbz2-dev liblzma-dev build-essential git cmake
+RUN apt-get update && \
+    apt-get install -y gcc g++ wget ncurses-dev zlib1g-dev libbz2-dev liblzma-dev build-essential git cmake
+# Install samtools and Picard
 RUN wget https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VERSION}/samtools-${SAMTOOLS_VERSION}.tar.bz2 && \
     tar jxvf samtools-${SAMTOOLS_VERSION}.tar.bz2 && \
     cd samtools-${SAMTOOLS_VERSION} && ./configure --prefix=/samtools && make -j `nproc` && make install
 RUN wget https://github.com/broadinstitute/picard/releases/download/${PICARD_VERSION}/picard.jar && \
     mkdir -p /picard && cp picard.jar /picard/
+# Install FQZcomp
 RUN git clone https://github.com/jkbonfield/fqzcomp.git && \
     cd fqzcomp && make -j `nproc` 
+# Install FaStore
 RUN git clone https://github.com/refresh-bio/FaStore.git && \
     cd FaStore && make -j `nproc` && chmod 755 scripts/*.sh
+# Install Spring
 RUN git clone https://github.com/shubhamchandak94/Spring.git && \
     cd Spring && mkdir build && cd build && cmake ../ && make -j `nproc`
+# Install Crumble
 RUN wget https://github.com/jkbonfield/crumble/releases/download/v0.8.3/crumble-${CRUMBLE_VERSION}.tar.gz && \
     cd /samtools-${SAMTOOLS_VERSION}/htslib-${SAMTOOLS_VERSION} && ./configure && make -j `nproc` && make install && \
     cd / && tar zxvf crumble-${CRUMBLE_VERSION}.tar.gz && mv crumble-${CRUMBLE_VERSION} /crumble && cd /crumble && \
     ./configure --with-htslib=/samtools-${SAMTOOLS_VERSION}/htslib-${SAMTOOLS_VERSION} && make -j `nproc`
+# Install repaq
+RUN git clone https://github.com/OpenGene/repaq.git && \
+    cd repaq && make -j `nproc` && make install
+
 
 #########################################################################################################
 # Final image
 FROM ubuntu:18.04
-RUN apt-get update && apt-get install -y python3 openjdk-11-jre-headless libgomp1 && \
+RUN apt-get update && apt-get install -y python3 openjdk-11-jre-headless libgomp1 pxz xz-utils && \
     apt-get autoclean && apt-get autoremove && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /samtools/bin/ /samtools/bin/
@@ -31,6 +41,7 @@ COPY --from=build /picard/ /picard/
 COPY --from=build /fqzcomp/fqzcomp /usr/local/bin/fqzcomp
 COPY --from=build /FaStore/bin /FaStore/scripts
 COPY --from=build /FaStore/scripts /FaStore/scripts
+COPY --from=build /repaq/repaq /usr/local/bin/repaq
 RUN sed -i 's/FASTORE_BIN=.\//FASTORE_BIN=\/FaStore\/scripts\//g' /FaStore/scripts/*.sh
 RUN sed -i 's/FASTORE_REBIN=.\//FASTORE_REBIN=\/FaStore\/scripts\//g' /FaStore/scripts/*.sh
 RUN sed -i 's/FASTORE_PACK=.\//FASTORE_PACK=\/FaStore\/scripts\//g' /FaStore/scripts/*.sh
