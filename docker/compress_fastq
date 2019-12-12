@@ -74,6 +74,9 @@ def _parse_args():
     compression_type_group.add_argument(
         "--fqzcomp", help="Compress using the fqzcomp algorithm", action="store_true"
     )
+    compression_type_group.add_argument(
+        "--petagene", help="Compress using the Petagene algorithm", action="store_true"
+    )
 
     misc_group = ap.add_argument_group("Misc arguments")
     misc_group.add_argument(
@@ -368,6 +371,38 @@ def convert_fastq_to_repaq(
     return output_filename
 
 
+def convert_fastq_to_petagene(
+    fwd_reads,
+    rev_reads=None,
+    num_threads=multiprocessing.cpu_count(),
+):
+    """Compress a pair of FASTQ files using Spring
+
+    Parameters
+    ----------
+    fwd_reads : str
+        The path to the forward reads in FASTQ format
+    rev_reads : str, optional
+        The path to the reverse reads in FASTQ format, by default None
+    num_threads : int, optional
+        Number of threads to use with Spring, by default multiprocessing.cpu_count()
+
+    Returns
+    -------
+    list[str]
+        The output filenames
+    """
+    cmd = ["petasuite", "-c", "-t", str(num_threads)]
+    output_filenames = re.sub(FASTQ_PATTERN, '.fasterq', fwd_reads)
+    subprocess.check_call(cmd + [fwd_reads])
+
+    if rev_reads is not None:
+        output_filenames.append(re.sub(FASTQ_PATTERN, '.fasterq', rev_reads))
+        subprocess.check_call(cmd + [rev_reads])
+
+    return output_filenames
+
+
 if __name__ == "__main__":
     args = _parse_args()
     if args.ucram:
@@ -435,5 +470,13 @@ if __name__ == "__main__":
             rev_reads=args.rev_reads,
             output_prefix=args.output_prefix,
             xz_compress=True,
+            num_threads=args.num_threads,
+        )
+    elif args.petagene:
+        if args.remove_ids:
+            logging.warn("Removing ids not supported for Petagene.")
+        convert_fastq_to_petagene(
+            fwd_reads=args.fwd_reads,
+            rev_reads=args.rev_reads,
             num_threads=args.num_threads,
         )
