@@ -66,6 +66,10 @@ lossless quality compression here. I will also evaluate the removal of read iden
 is a straight forward option to the tool.
 * [**fqzcomp**](https://github.com/jkbonfield/fqzcomp) - This compressor also offers lossless and lossy
 compression of quality scores. Once again, for our evaluation purposes we will stick to lossless for now.
+* [**repaq**](https://github.com/OpenGene/repaq) - Repaq offers lossless compression of FASTQ files. The
+authors highlight repaq's speed and the ability to obtain further compression through the use of xz. While
+repaq can operate on any pair of FASTQ files, the authors note that compression ratios on Illumina data are
+better than those for BGI data.
 
 ## Data used during evaluation
 As a first pass evaluation, I selected two NGS samples from the 
@@ -87,7 +91,7 @@ both the WES and WGS samples, the tool would begin the multi-stage process of co
 but it then would freeze. I did not see an error message. While monitoring the initial runs, I did observe
 a few peaks in memory use, so I tried the samples on an instance with significant memory resources - roughly
 128 GB. I also provided up to 1 TB of storage space in case significant temporary files were generated.
-Alas, these efforts did not help. I amy return at some point to investigate these failures in more depth,
+Alas, these efforts did not help. I may return at some point to investigate these failures in more depth,
 but for now I will just report results on the other tools.
 
 ### Timing
@@ -119,20 +123,20 @@ for both WES and WGS samples. The larger instance for WGS was selected for the l
 requirements offered.
 
 #### Compression
-|   Sample   |             gzip            |             gzip -9         |  uBAM  | uCRAM  | FaStore | Spring | Spring --no-ids |   fqzcom  |
-| ---------- | --------------------------- | --------------------------- | ------ | -----  | ------- | ------ | --------------- | --------- |
-| SRR2962693 |   26m and 26m (52m total)   |  1h 35m and 1h 39m (3h 14m) |   39m  |  35m   |   DNF   |   26m  |      26m        |    32m    |
-| SRR8861483 | 1h 36m and 1h 23m (2h 59m)  |   9h 35m + 12h = 21h 35m    | 2h 34m | 2h 35m |   DNF   |  3h 3m |     3h 2m       |  2h 15m   | 
+|   Sample   |             gzip            |             gzip -9         |  uBAM  | uCRAM  | FaStore | Spring | Spring --no-ids |   fqzcom  |  repaq |  repaq-xz |
+| ---------- | --------------------------- | --------------------------- | ------ | -----  | ------- | ------ | --------------- | --------- | ------ | --------- |
+| SRR2962693 |   26m and 26m (52m total)   |  1h 35m and 1h 39m (3h 14m) |   39m  |  35m   |   DNF   |   26m  |      26m        |    32m    |  10m   |    52m    |
+| SRR8861483 | 1h 36m and 1h 23m (2h 59m)  |   9h 35m + 12h = 21h 35m    | 2h 34m | 2h 35m |   DNF   |  3h 3m |     3h 2m       |  2h 15m   |  47m   |    147m   |
 
 | SRR2962693 WES | SRR8861483 WGS |
 | -------------- | -------------- |
 | ![WES Compression times](https://user-images.githubusercontent.com/3038393/68101167-1cdd1d00-fe81-11e9-84f4-73b5fc453335.png)| ![WGS Compression times](https://user-images.githubusercontent.com/3038393/68101218-56158d00-fe81-11e9-807d-e6ec176b7ae0.png) |
 
 #### Decompression
-|   Sample   |               gzip            |             gzip -9           |  uBAM | uCRAM  | FaStore | Spring | Spring --no-ids |          fqzcomp            |
-| ---------- | ----------------------------- | ----------------------------- | ----- | -----  | ------- | ------ | --------------- | --------------------------- |
-| SRR2962693 |      2m and 2m (4m total)     |    2m and 2m (4m total)       | 10m   |  10m   |   DNF   |  16m   |      16m        | 14m and 14m (28m total)     | 
-| SRR8861483 | 11m and 11m (22m total)       |      11m and 11m (22m total)  | 58m   | 1h 25m |   DNF   |  53m   |      51m        | 1h 5m and ??? (2h 10m) |
+|   Sample   |               gzip            |             gzip -9           |  uBAM | uCRAM  | FaStore | Spring | Spring --no-ids |          fqzcomp            |  repaq |  repaq-xz |
+| ---------- | ----------------------------- | ----------------------------- | ----- | -----  | ------- | ------ | --------------- | --------------------------- | ------ | --------- |
+| SRR2962693 |      2m and 2m (4m total)     |    2m and 2m (4m total)       | 10m   |  10m   |   DNF   |  16m   |      16m        | 14m and 14m (28m total)     |  18m   |     25m   |
+| SRR8861483 | 11m and 11m (22m total)       |      11m and 11m (22m total)  | 58m   | 1h 25m |   DNF   |  53m   |      51m        | 1h 5m and ??? (2h 10m)      |   92m  |    122m   |
 
 (Note: I forgot to record the time for decompressing the reverse reads for fqzcomp. My assumption is 
 that it would take a similar time to decompress the reverse reads as it did to decompress the forward reads.)
@@ -148,10 +152,10 @@ studies show that it's possible to significantly bin quality scores without impa
 variant calling pipelines. However, to limit the scope to the most uncontroversial mode of compression, for
 now I'll look at methods that preserve the full, original quality information.
 
-|   Sample   |  SRA  |   FASTQ    | FASTQ.gz | FASTQ.gz -9 |  uBAM  | uCRAM  | FaStore | Spring | Spring --no-ids | fqzcomp |
-| ---------- | ----- | ---------- | -------- | ----------- | ------ | ------ | ------- | ------ | --------------- | ------- |
-| SRR2962693 |  7 GB |   40 GB    |  10.3 GB |   9.4 GB    | 9.3 GB | 6.6 GB |   DNF   | 3.5 GB |      3.5 GB     |  4.7 GB | 
-| SRR8861483 | 23 GB |   284 GB   |  33 GB   |  32 GB      | 33 GB  | 22 GB  |   DNF   | 15 GB  |      15 GB      |  37 GB  |
+|   Sample   |  SRA  |   FASTQ    | FASTQ.gz | FASTQ.gz -9 |  uBAM  | uCRAM  | FaStore | Spring | Spring --no-ids | fqzcomp |  repaq |  repaq-xz |
+| ---------- | ----- | ---------- | -------- | ----------- | ------ | ------ | ------- | ------ | --------------- | ------- | ------ | --------- |
+| SRR2962693 |  7 GB |   40 GB    |  10.3 GB |   9.4 GB    | 9.3 GB | 6.6 GB |   DNF   | 3.5 GB |      3.5 GB     |  4.7 GB | 12 GB  |    5.4 GB |
+| SRR8861483 | 23 GB |   284 GB   |  33 GB   |  32 GB      | 33 GB  | 22 GB  |   DNF   | 15 GB  |      15 GB      |  37 GB  | 77 GB  |    21 GB  |
 
 | SRR2962693 WES | SRR8861483 WGS |
 | -------------- | -------------- |
@@ -214,6 +218,9 @@ authors note that all bases called as an N will have their quality score set to 
 verify that all quality changes could be explained by this behavior.
 
 For **Spring**, I verified that the nucleotide information and the quality information from the uncompressed 
+data exactly matched the input data.
+
+For **repaq**, I verified that the nucleotide information and the quality information from the ucompressed
 data exactly matched the input data.
 
 During **uBAM** and **uCRAM** creation, the input reads are sorted by read name, making comparison of 
