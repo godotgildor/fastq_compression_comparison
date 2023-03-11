@@ -70,7 +70,9 @@ compression of quality scores. Once again, for our evaluation purposes we will s
 authors highlight repaq's speed and the ability to obtain further compression through the use of xz. While
 repaq can operate on any pair of FASTQ files, the authors note that compression ratios on Illumina data are
 better than those for BGI data.
-* [**Petagene**](https://www.petagene.com) -
+* [**Petagene**](https://www.petagene.com) - Petagene offers a suite of compression tools that can losslessly
+compress both `fastq.gz` files and `.bam` files. The software will even capture gzip settings so that 
+md5sums of compressed->decompressed files will match those of their original.
 
 ## Data used during evaluation
 As a first pass evaluation, I selected two NGS samples from the 
