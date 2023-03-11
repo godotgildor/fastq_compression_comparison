@@ -70,6 +70,9 @@ compression of quality scores. Once again, for our evaluation purposes we will s
 authors highlight repaq's speed and the ability to obtain further compression through the use of xz. While
 repaq can operate on any pair of FASTQ files, the authors note that compression ratios on Illumina data are
 better than those for BGI data.
+* [**Petagene**](https://www.petagene.com) - Petagene offers a suite of compression tools that can losslessly
+compress both `fastq.gz` files and `.bam` files. The software will even capture gzip settings so that 
+md5sums of compressed->decompressed files will match those of their original.
 
 ## Data used during evaluation
 As a first pass evaluation, I selected two NGS samples from the 
@@ -123,27 +126,27 @@ for both WES and WGS samples. The larger instance for WGS was selected for the l
 requirements offered.
 
 #### Compression
-|   Sample   |             gzip            |             gzip -9         |  uBAM  | uCRAM  | FaStore | Spring | Spring --no-ids |   fqzcom  |  repaq |  repaq-xz |
-| ---------- | --------------------------- | --------------------------- | ------ | -----  | ------- | ------ | --------------- | --------- | ------ | --------- |
-| SRR2962693 |   26m and 26m (52m total)   |  1h 35m and 1h 39m (3h 14m) |   39m  |  35m   |   DNF   |   26m  |      26m        |    32m    |  10m   |    52m    |
-| SRR8861483 | 1h 36m and 1h 23m (2h 59m)  |   9h 35m + 12h = 21h 35m    | 2h 34m | 2h 35m |   DNF   |  3h 3m |     3h 2m       |  2h 15m   |  47m   |    147m   |
+|   Sample   |             gzip            |             gzip -9         |  uBAM  | uCRAM  | FaStore | Spring | Spring --no-ids |   fqzcom  |  repaq |  repaq-xz |      Petagene          |
+| ---------- | --------------------------- | --------------------------- | ------ | -----  | ------- | ------ | --------------- | --------- | ------ | --------- | ---------------------- |
+| SRR2962693 |   26m and 26m (52m total)   |  1h 35m and 1h 39m (3h 14m) |   39m  |  35m   |   DNF   |   26m  |      26m        |    32m    |  10m   |    52m    | 1.75m and 1.75m (3.5m) |
+| SRR8861483 | 1h 36m and 1h 23m (2h 59m)  |   9h 35m + 12h = 21h 35m    | 2h 34m | 2h 35m |   DNF   |  3h 3m |     3h 2m       |  2h 15m   |  47m   |    147m   | 8.25m + 8.75m (17m)    |
 
 | SRR2962693 WES | SRR8861483 WGS |
 | -------------- | -------------- |
-| ![WES Compression times](https://user-images.githubusercontent.com/3038393/68101167-1cdd1d00-fe81-11e9-84f4-73b5fc453335.png)| ![WGS Compression times](https://user-images.githubusercontent.com/3038393/68101218-56158d00-fe81-11e9-807d-e6ec176b7ae0.png) |
+| ![WES Compression times](https://user-images.githubusercontent.com/3038393/70670885-42530880-1c2f-11ea-96cd-aba10e2f6caf.png)| ![WGS Compression times](https://user-images.githubusercontent.com/3038393/70670876-3bc49100-1c2f-11ea-8510-fe446d19c2b8.png) |
 
 #### Decompression
-|   Sample   |               gzip            |             gzip -9           |  uBAM | uCRAM  | FaStore | Spring | Spring --no-ids |          fqzcomp            |  repaq |  repaq-xz |
-| ---------- | ----------------------------- | ----------------------------- | ----- | -----  | ------- | ------ | --------------- | --------------------------- | ------ | --------- |
-| SRR2962693 |      2m and 2m (4m total)     |    2m and 2m (4m total)       | 10m   |  10m   |   DNF   |  16m   |      16m        | 14m and 14m (28m total)     |  18m   |     25m   |
-| SRR8861483 | 11m and 11m (22m total)       |      11m and 11m (22m total)  | 58m   | 1h 25m |   DNF   |  53m   |      51m        | 1h 5m and ??? (2h 10m)      |   92m  |    122m   |
+|   Sample   |               gzip            |             gzip -9           |  uBAM | uCRAM  | FaStore | Spring | Spring --no-ids |          fqzcomp            |  repaq |  repaq-xz |          Petagene             |
+| ---------- | ----------------------------- | ----------------------------- | ----- | -----  | ------- | ------ | --------------- | --------------------------- | ------ | --------- | ----------------------------- |
+| SRR2962693 |      2m and 2m (4m total)     |    2m and 2m (4m total)       | 10m   |  10m   |   DNF   |  16m   |      16m        | 14m and 14m (28m total)     |  18m   |     25m   |  1.25m and 1.25m (2.5m total) |
+| SRR8861483 | 11m and 11m (22m total)       |      11m and 11m (22m total)  | 58m   | 1h 25m |   DNF   |  53m   |      51m        | 1h 5m and ??? (2h 10m)      |   92m  |    122m   | 5.75m and 6m (11.75m total)   |
 
 (Note: I forgot to record the time for decompressing the reverse reads for fqzcomp. My assumption is 
 that it would take a similar time to decompress the reverse reads as it did to decompress the forward reads.)
 
 | SRR2962693 WES | SRR8861483 WGS |
 | -------------- | -------------- |
-| ![WES Deompression times](https://user-images.githubusercontent.com/3038393/68101261-937a1a80-fe81-11e9-9ca2-83eab2bf23a2.png)| ![WGS Deompression times](https://user-images.githubusercontent.com/3038393/68101314-d0461180-fe81-11e9-92e5-9674167be848.png) |
+| ![WES Deompression times](https://user-images.githubusercontent.com/3038393/70670872-36674680-1c2f-11ea-9a7d-c9f969dcce58.png)| ![WGS Deompression times](https://user-images.githubusercontent.com/3038393/70670863-3109fc00-1c2f-11ea-93c2-de7c2142040e.png) |
 
 ### Storage size
 As discussed in the tools section, I am concentrating on lossless compression for this current study. In many
@@ -152,14 +155,14 @@ studies show that it's possible to significantly bin quality scores without impa
 variant calling pipelines. However, to limit the scope to the most uncontroversial mode of compression, for
 now I'll look at methods that preserve the full, original quality information.
 
-|   Sample   |  SRA  |   FASTQ    | FASTQ.gz | FASTQ.gz -9 |  uBAM  | uCRAM  | FaStore | Spring | Spring --no-ids | fqzcomp |  repaq |  repaq-xz |
-| ---------- | ----- | ---------- | -------- | ----------- | ------ | ------ | ------- | ------ | --------------- | ------- | ------ | --------- |
-| SRR2962693 |  7 GB |   40 GB    |  10.3 GB |   9.4 GB    | 9.3 GB | 6.6 GB |   DNF   | 3.5 GB |      3.5 GB     |  4.7 GB | 12 GB  |    5.4 GB |
-| SRR8861483 | 23 GB |   284 GB   |  33 GB   |  32 GB      | 33 GB  | 22 GB  |   DNF   | 15 GB  |      15 GB      |  37 GB  | 77 GB  |    21 GB  |
+|   Sample   |  SRA  |   FASTQ    | FASTQ.gz | FASTQ.gz -9 |  uBAM  | uCRAM  | FaStore | Spring | Spring --no-ids | fqzcomp |  repaq |  repaq-xz | Petagene |
+| ---------- | ----- | ---------- | -------- | ----------- | ------ | ------ | ------- | ------ | --------------- | ------- | ------ | --------- | -------- |
+| SRR2962693 |  7 GB |   40 GB    |  10.3 GB |   9.4 GB    | 9.3 GB | 6.6 GB |   DNF   | 3.5 GB |      3.5 GB     |  4.7 GB | 12 GB  |    5.4 GB |  3.6 GB  |
+| SRR8861483 | 23 GB |   284 GB   |  33 GB   |  32 GB      | 33 GB  | 22 GB  |   DNF   | 15 GB  |      15 GB      |  37 GB  | 77 GB  |    21 GB  | 15.2 GB  |
 
 | SRR2962693 WES | SRR8861483 WGS |
 | -------------- | -------------- |
-| ![WES Compressed file sizes](https://user-images.githubusercontent.com/3038393/68100909-94aa4800-fe7f-11e9-99cb-f2f6443dd191.png)| ![WGS Compressed file sizes](https://user-images.githubusercontent.com/3038393/68100964-f965a280-fe7f-11e9-8ca9-29496aaf843a.png) |
+| ![WES Compressed file sizes](https://user-images.githubusercontent.com/3038393/70670858-2cddde80-1c2f-11ea-8deb-ac9ac2259fb7.png)| ![WGS Compressed file sizes](https://user-images.githubusercontent.com/3038393/70670853-294a5780-1c2f-11ea-93c5-b34923557a19.png) |
 
 ## Discussion
 As is widely accepted, researchers at a minimum should gzip compress their raw FASTQ files. For the

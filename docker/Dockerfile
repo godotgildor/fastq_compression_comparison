@@ -33,9 +33,19 @@ RUN git clone https://github.com/OpenGene/repaq.git && \
 #########################################################################################################
 # Final image
 FROM ubuntu:18.04
-RUN apt-get update && apt-get install -y python3 openjdk-11-jre-headless libgomp1 pxz xz-utils && \
+RUN apt-get update && apt-get install -y python3 openjdk-11-jre-headless libgomp1 pxz xz-utils libcurl4-openssl-dev aria2 && \
     apt-get autoclean && apt-get autoremove && rm -rf /var/lib/apt/lists/*
 
+# Install Petagene. 
+# Note: Petagene will provide a free trial of their software, see:
+# https://www.petagene.com/
+# If you would like to skip including the Petagene portion, just 
+# comment out the three statements below.
+ADD petasuite-cloud-edition_1.2.6p6_amd64.deb /petasuite-cloud-edition_1.2.6p6_amd64.deb
+RUN dpkg -i /petasuite-cloud-edition_1.2.6p6_amd64.deb && \
+    rm /petasuite-cloud-edition_1.2.6p6_amd64.deb
+RUN petasuite_install_corpus human
+# END Petagene
 COPY --from=build /samtools/bin/ /samtools/bin/
 COPY --from=build /picard/ /picard/
 COPY --from=build /fqzcomp/fqzcomp /usr/local/bin/fqzcomp
