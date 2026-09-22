@@ -1,0 +1,12 @@
+name: fastq-compression-data
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.9
+  - sra-tools>=3.4
+  - bwa-mem2>=2.2
+  - samtools>=1.16
+  - pigz
+  - wget

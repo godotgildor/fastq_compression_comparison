@@ -1,1 +1,13 @@
 *.deb
+__pycache__/
+*.pyc
+data/*.fastq
+data/*.fastq.gz
+data/*.fq
+data/*.fq.gz
+data/*.bam
+data/*.bam.bai
+data/*.fa
+data/*.fa.gz
+data/*.fa.*
+data/SRR*/

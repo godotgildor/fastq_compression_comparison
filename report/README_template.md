@@ -34,20 +34,7 @@ column means the tool did not meet its claimed fidelity on the test data.
 
 ## Tools evaluated
 
-| Tool             | Fidelity         | Conda Package      | License                                                                                                                                                                         |
-| ---------------- | ---------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| fqxv             | lossless         | `fqxv>=0.7`        | —                                                                                                                                                                               |
-| fqzcomp          | quality-lossy    | `fqzcomp>=4.6`     | —                                                                                                                                                                               |
-| genozip          | lossless         | `genozip>=15`      | Commercial — free for academic/student use. Install: `conda install -c conda-forge genozip`. See https://genozip.com/installing for full instructions and license registration. |
-| genozip-optimize | quality-lossy    | `genozip>=15`      | Commercial — free for academic/student use. Install: `conda install -c conda-forge genozip`. See https://genozip.com/installing for full instructions and license registration. |
-| petagene         | lossless         | _source build_     | Proprietary (PetaGene/Illumina). Requires a license. Download PetaSuite from petagene.com and run `petasuite_install_corpus human` before use.                                  |
-| repaq            | lossless         | `repaq>=0.3`       | —                                                                                                                                                                               |
-| repaq-xz         | lossless         | `repaq>=0.3`, `xz` | —                                                                                                                                                                               |
-| spring           | lossless         | `spring>=1.1`      | Free for non-commercial use                                                                                                                                                     |
-| spring-no-ids    | id-lossy         | `spring>=1.1`      | Free for non-commercial use                                                                                                                                                     |
-| ubam             | record-reordered | `samtools>=1.16`   | —                                                                                                                                                                               |
-| ucram            | record-reordered | `samtools>=1.16`   | —                                                                                                                                                                               |
-| zdur             | record-reordered | _source build_     | Non-commercial license required (free for academics). Run `zdur` once interactively to register your key. See https://github.com/MGI-EU/zDUR                                    |
+<!-- TOOLS_TABLE -->
 
 ### Notable tools not included in this benchmark
 
@@ -97,8 +84,7 @@ docker run ... fastq-compression-benchmark -1 ... -2 ... --tools spring repaq ge
 
 ## Results
 
-_No results yet. Run `python run_benchmark.py` to generate._
-
+<!-- RESULTS_SECTION -->
 
 ## Discussion
 
